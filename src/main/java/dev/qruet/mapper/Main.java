@@ -1,5 +1,7 @@
 package dev.qruet.mapper;
 
+import dev.qruet.mapper.java.QClass;
+import dev.qruet.mapper.java.QMethod;
 import dev.qruet.mapper.jd.JDLoader;
 import dev.qruet.mapper.jd.JDPrinter;
 import org.jd.core.v1.ClassFileToJavaSourceDecompiler;
@@ -11,6 +13,9 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 import java.util.jar.JarFile;
 
@@ -37,15 +42,23 @@ public class Main {
             return;
         }
 
+
         File logFile = buildFile(logPath);
         logger = new Logger(logFile);
 
         try {
             URLClassLoader child = new URLClassLoader(new URL[]{jar1.toURL()}, Main.class.getClassLoader());
-            JDPrinter printer = new JDPrinter();
-            ClassFileToJavaSourceDecompiler decompiler = new ClassFileToJavaSourceDecompiler();
-            decompiler.decompile(new JDLoader(child), printer, "net/minecraft/server/AdvancementDataPlayer");
-            System.out.println(printer);
+            Class<?> clazz = Class.forName("net.minecraft.server.AdvancementDataPlayer", true, child);
+            QClass c = new QClass(clazz);
+            System.out.println(c.getPackage());
+            for(QMethod method : c.methods()) {
+                System.out.println(method.returnType().getSimpleName() + " " + method.getName() + "(" + List.of(method.parameters() + ")"));
+                Iterator<String> body = method.getBody();
+                while(body.hasNext()) {
+                    System.out.println(body.next());
+                }
+            }
+            System.out.println("------------------------------------");
 
         } catch(Exception e) {
             e.printStackTrace();

@@ -7,6 +7,7 @@ import java.io.IOException;
 /**
  * This class is responsible for writing messages to the designated log file
  *
+ * @author Qruet
  */
 public class Logger {
 

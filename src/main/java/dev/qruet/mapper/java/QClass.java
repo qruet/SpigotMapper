@@ -24,16 +24,16 @@ public class QClass {
         ClassFileToJavaSourceDecompiler decompiler = new ClassFileToJavaSourceDecompiler();
         try {
             decompiler.decompile(new JDLoader(clazz.getClassLoader()), printer, clazz.getName().replaceAll("\\.", "/"));
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         this.printer = printer;
 
-        for(Method method : clazz.getDeclaredMethods()) {
-            if(method.getDeclaringClass() != clazz)
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (method.getDeclaringClass() != clazz)
                 continue;
-            methods.add(new QMethod(this, method.getName(), method.getReturnType(), method.getParameterTypes()));
+            methods.add(new QMethod(this, method.getName(), method.getGenericReturnType(), method.getGenericParameterTypes()));
         }
     }
 

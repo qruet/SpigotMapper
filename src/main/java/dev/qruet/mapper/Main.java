@@ -42,57 +42,25 @@ public class Main {
             return;
         }
 
+        File jar2 = new File(path2);
+        if(!jar2.exists()) {
+            System.out.println("Failed to find jar file, " + jar2.getAbsolutePath() + ".");
+            return;
+        }
 
         File logFile = buildFile(logPath);
         logger = new Logger(logFile);
 
         try {
-            URLClassLoader child = new URLClassLoader(new URL[]{jar1.toURL()}, Main.class.getClassLoader());
-            Class<?> clazz = Class.forName("net.minecraft.server.AdvancementDataPlayer", true, child);
-            QClass c = new QClass(clazz);
-            System.out.println(c.getPackage());
-            for(QMethod method : c.methods()) {
-                System.out.println(method.returnType().getSimpleName() + " " + method.getName() + "(" + List.of(method.parameters() + ")"));
-                Iterator<String> body = method.getBody();
-                while(body.hasNext()) {
-                    System.out.println(body.next());
-                }
-            }
-            System.out.println("------------------------------------");
+            JarFile jarFile1 = new JarFile(jar1);
+            JarFile jarFile2 = new JarFile(jar2);
 
-        } catch(Exception e) {
+            URLClassLoader child = new URLClassLoader(new URL[]{jar1.toURL(), jar2.toURL()}, Main.class.getClassLoader());
+            JarComparator comparator = new JarComparator(child, jarFile1, jarFile2);
+            comparator.compareJars();
+        } catch(IOException e){
             e.printStackTrace();
         }
-
-        /*boolean skip = true;
-        try {
-            java.util.jar.JarFile jar = new JarFile(jar1);
-            java.util.Enumeration enumEntries = jar.entries();
-            while (enumEntries.hasMoreElements()) {
-                java.util.jar.JarEntry file = (java.util.jar.JarEntry) enumEntries.nextElement();
-                if(file.isDirectory()) {
-                    if(file.getName().contains("net/minecraft/server"))
-                       skip = false;
-                    else
-                        skip = true;
-                    continue;
-                }
-
-                if(skip)
-                    continue;
-
-                System.out.println("Reading class: " + file.getName());
-                java.io.InputStream is = jar.getInputStream(file); // get the input stream
-                Scanner scanner = new Scanner(is);
-                while (scanner.hasNextLine()) {  // write contents of 'is' to 'fos'
-                    System.out.println(scanner.nextLine().replaceAll("[^\\x20-\\x7e]", ""));
-                }
-                scanner.close();
-            }
-            jar.close();
-        } catch(IOException e) {
-            e.printStackTrace();
-        }*/
     }
 
     private static File buildFile(String path) {

@@ -2,6 +2,7 @@ package dev.qruet.mapper.java;
 
 import dev.qruet.mapper.jd.JDPrinter;
 
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -12,21 +13,32 @@ public class QMethod {
 
     private final QClass parent;
     private final String name;
-    private final Class<?> returnType;
-    private final Class<?>[] parameters;
+    private final Type returnType;
+    private final Type[] parameters;
     private final List<String> body;
 
-    public QMethod(final QClass parent, final String name, Class<?> returnType, Class<?>... params) {
+    public QMethod(final QClass parent, final String name, Type returnType, Type... params) {
         this.parent = parent;
         this.name = name;
         this.parameters = params;
         this.returnType = returnType;
 
         this.body = new ArrayList<>();
-
         final String classBody = parent.decompile();
         String trim = classBody;
-        trim = trim.substring(classBody.indexOf(returnType.getSimpleName() + " " + name + "("));
+
+        SimpleType type = SimpleType.of(returnType);
+        StringBuilder header = new StringBuilder(type + " " + name + "(");
+        List<String> arguments = new ArrayList<>();
+        for(Type t : params) {
+            arguments.add(SimpleType.of(t) + " ?");
+        }
+        header.append(String.join(", ", arguments) + ")");
+
+        System.out.println("Building method " + header);
+        // TODO Ignore parameter field names
+
+        trim = trim.substring(classBody.indexOf(header.toString()));
         trim = trim.substring(trim.indexOf("{") + 1);
 
         int c = 1;
@@ -43,7 +55,7 @@ public class QMethod {
         body.addAll(Arrays.stream(trim.split("\n")).filter(ln -> !ln.isBlank()).collect(Collectors.toList()));
     }
 
-    public Class<?> returnType() {
+    public Type returnType() {
         return returnType;
     }
 
@@ -51,7 +63,7 @@ public class QMethod {
         return body.iterator();
     }
 
-    public Collection<Class<?>> parameters() {
+    public Collection<Type> parameters() {
         return Collections.unmodifiableCollection(Arrays.asList(parameters));
     }
 

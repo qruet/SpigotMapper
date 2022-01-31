@@ -31,8 +31,9 @@ public class QClass {
         this.printer = printer;
 
         for (Method method : clazz.getDeclaredMethods()) {
-            if (method.getDeclaringClass() != clazz)
+            if (method.getDeclaringClass() != clazz || method.isBridge())
                 continue;
+            System.out.println("Method Class: " + method.getDeclaringClass());
             methods.add(new QMethod(this, method.getName(), method.getGenericReturnType(), method.getGenericParameterTypes()));
         }
     }

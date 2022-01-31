@@ -18,7 +18,6 @@ public class SimpleType {
     private SimpleType genericType;
 
     private SimpleType(String path, String name) {
-        System.out.println("Type: " + path + " " + name);
         this.path = path;
         primitive = path == null || path.isBlank() || !path.contains(".");
         generic = !primitive && name.contains("<");
@@ -56,9 +55,9 @@ public class SimpleType {
     public String toString() {
         StringBuilder header = new StringBuilder(getName());
 
-        SimpleType type = this;
+        SimpleType type = getGenericType();
         int i;
-        for(i = 0; isGeneric(); i++, type = type.getGenericType())
+        for(i = 0; isGeneric() && type != null; i++, type = type.getGenericType())
             header.append("<" + type.getName());
         for(; i > 0; i--)
             header.append(">");

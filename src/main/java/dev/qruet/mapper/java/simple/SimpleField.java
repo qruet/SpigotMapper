@@ -1,4 +1,4 @@
-package dev.qruet.mapper.java;
+package dev.qruet.mapper.java.simple;
 
 import java.lang.reflect.Field;
 

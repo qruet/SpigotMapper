@@ -1,9 +1,9 @@
 package dev.qruet.mapper.java;
 
+import dev.qruet.mapper.java.simple.SimpleField;
+import dev.qruet.mapper.java.simple.SimpleType;
 import dev.qruet.mapper.java.util.Pair;
-import dev.qruet.mapper.jd.JDPrinter;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,6 +78,11 @@ public class QMethod {
                     }
 
                     if(eF == 0 && !val.isEmpty() && (c == ' ' || c == ',' || (i == (pHa.length - 1)))) {
+                        if(val.toString().equals("final")) {
+                            val = new StringBuilder();
+                            continue;
+                        }
+
                         if(entry.getKey() == null) {
                             entry.setKey(val.toString());
                         }
@@ -97,9 +102,18 @@ public class QMethod {
                 boolean f2 = true;
                 for (int i = 0; i < entries.size(); i ++) {
                     String arg = entries.get(i).getKey();
-                    String t = SimpleType.of(parameters[i]).toString();
-                    System.out.println(arg + "  vs  " + t);
-                    if (!arg.equals(SimpleType.of(parameters[i]).toString())) {
+                    SimpleType t1 = SimpleType.of(parameters[i]);
+                    String t1_str;
+                    if(arg.contains(".")) {
+                        t1_str = (t1.getPackage() + "." + t1);
+                        int i1 = t1_str.indexOf(arg);
+                        if(i1 != -1)
+                            t1_str = t1_str.substring(i1);
+                    } else {
+                        t1_str = t1.toString();
+                    }
+                    System.out.println(arg + "  vs  " + t1_str);
+                    if (!arg.equals(t1_str)) {
                         f2 = false;
                     }
                 }
@@ -110,6 +124,11 @@ public class QMethod {
         }
 
         System.out.println("Index: " + index);
+        if(index == -1) {
+            System.out.println("=====================");
+            System.out.println("Failed to build method: " + header);
+            System.out.println("=====================");
+        }
 
         String trim = classBody;
         trim = trim.substring(index);

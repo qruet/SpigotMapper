@@ -31,9 +31,9 @@ public class QClass {
         this.printer = printer;
 
         for (Method method : clazz.getDeclaredMethods()) {
-            if (method.getDeclaringClass() != clazz || method.isBridge())
+            if (method.getDeclaringClass() != clazz || method.isBridge() || method.isSynthetic())
                 continue;
-            System.out.println("Method Class: " + method.getDeclaringClass());
+            // TODO Hardcode check and skip for Enum#values() function for any class of type Enum. 
             methods.add(new QMethod(this, method.getName(), method.getGenericReturnType(), method.getGenericParameterTypes()));
         }
     }

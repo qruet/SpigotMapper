@@ -15,12 +15,21 @@ public class SimpleType {
     private final String path;
     private final String name;
     private final boolean primitive;
+    private boolean extended;
 
     private SimpleType[] generics;
 
     private SimpleType(String path, String name) {
+        if(path != null && path.startsWith("? extends")) {
+            System.out.println("extends..");
+            extended = true;
+            path = path.substring("? extends ".length());
+            System.out.println("path = " + path);
+        }
+
         this.path = path;
         primitive = path == null || path.isBlank() || !path.contains(".");
+
         if (!primitive && name.contains("<")) {
             // handle generic type
             String generic = name.substring(name.indexOf("<") + 1, name.indexOf(">"));
@@ -43,7 +52,7 @@ public class SimpleType {
         return Collections.unmodifiableCollection(Arrays.asList(this.generics));
     }
 
-    public boolean isGeneric() {
+    public boolean hasGeneric() {
         return generics != null;
     }
 
@@ -61,13 +70,14 @@ public class SimpleType {
 
     @Override
     public String toString() {
-        StringBuilder header = new StringBuilder(getName());
-        if (isGeneric()) {
+        StringBuilder header = new StringBuilder(extended ? "? extends " + getName() : getName());
+        if (hasGeneric()) {
             // handle generics
             header.append("<");
             List<String> vals = new ArrayList<>();
             for (SimpleType type : generics)
                 vals.add(type.toString());
+            // TODO resolve recursive issues with nested generic types
             header.append(String.join(", ", vals));
             header.append(">");
         }

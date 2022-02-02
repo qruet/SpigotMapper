@@ -33,7 +33,12 @@ public class QClass {
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.getDeclaringClass() != clazz || method.isBridge() || method.isSynthetic())
                 continue;
-            // TODO Hardcode check and skip for Enum#values() function for any class of type Enum. 
+            // TODO Hardcode check and skip for Enum#values() function for any class of type Enum.
+            if(clazz.isEnum()) {
+                if(method.getName().equals("values")) {
+                    continue;
+                }
+            }
             methods.add(new QMethod(this, method.getName(), method.getGenericReturnType(), method.getGenericParameterTypes()));
         }
     }

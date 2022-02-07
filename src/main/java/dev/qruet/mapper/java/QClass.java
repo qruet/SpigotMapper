@@ -39,6 +39,8 @@ public class QClass {
                     continue;
                 }
             }
+
+            System.out.println("Building: " + method.toGenericString());
             methods.add(new QMethod(this, method.getName(), method.getGenericReturnType(), method.getGenericParameterTypes()));
         }
     }

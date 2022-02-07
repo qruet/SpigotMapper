@@ -57,9 +57,11 @@ public class JarScanner {
     }
 
     public void loadClass(String path) {
+        System.out.println("\n---------------");
         System.out.println("Load: " + path);
+        System.out.println("---------------\n");
         try {
-            Class<?> clazz = Class.forName(path, true, classLoader);
+            Class<?> clazz = Class.forName(path, false, classLoader);
             QClass c = new QClass(clazz);
             if(consumer != null)
                 consumer.accept(c);

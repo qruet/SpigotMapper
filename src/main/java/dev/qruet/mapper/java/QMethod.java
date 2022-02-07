@@ -1,5 +1,6 @@
 package dev.qruet.mapper.java;
 
+import dev.qruet.mapper.java.simple.SimpleClass;
 import dev.qruet.mapper.java.simple.SimpleField;
 import dev.qruet.mapper.java.simple.SimpleType;
 import dev.qruet.mapper.java.util.Pair;
@@ -30,7 +31,6 @@ public class QMethod {
 
         SimpleType type = SimpleType.of(returnType);
         StringBuilder header = new StringBuilder(type + " " + name + "(");
-        System.out.println("Building method " + header);
         System.out.println("Args[" + parameters.length + "]: " + Arrays.asList(parameters));
 
         int index = 0;
@@ -105,16 +105,24 @@ public class QMethod {
                     SimpleType t1 = SimpleType.of(parameters[i]);
                     String t1_str;
                     if(arg.contains(".")) {
-                        t1_str = (t1.getPackage() + "." + t1);
-                        int i1 = t1_str.indexOf(arg);
-                        if(i1 != -1)
-                            t1_str = t1_str.substring(i1);
+                        // has parent class included (e.g. PacketPlayOutPosition.EnumPlayerTeleportFlags)
+                        if(!t1.getSimpleClass().hasParent())
+                            continue;
+
+                        SimpleClass par = t1.getSimpleClass().getParent();
+                        t1_str = par.getName() + "." + t1;
                     } else {
                         t1_str = t1.toString();
                     }
+
+                    if(t1_str.contains("<?>") && !arg.contains("<?>")) {
+                        t1_str = t1_str.replaceAll("<\\?>","");
+                    }
+
                     System.out.println(arg + "  vs  " + t1_str);
                     if (!arg.equals(t1_str)) {
                         f2 = false;
+                        break;
                     }
                 }
 
@@ -146,6 +154,7 @@ public class QMethod {
 
         trim = trim.substring(0, i - 1);
         body.addAll(Arrays.stream(trim.split("\n")).filter(ln -> !ln.isBlank()).collect(Collectors.toList()));
+        System.out.println("Done!\n");
     }
 
     public Type returnType() {

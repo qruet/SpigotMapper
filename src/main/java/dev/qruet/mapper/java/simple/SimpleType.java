@@ -8,43 +8,66 @@ import java.util.*;
 public class SimpleType {
 
     public static SimpleType of(Type type) {
-        Pair<String, String> out = split(type.getTypeName());
-        return new SimpleType(out.getKey(), out.getValue());
+        return of(type.getTypeName(), false);
     }
 
-    private final String path;
-    private final String name;
-    private final boolean primitive;
+    private static SimpleType of(String typeName, boolean extended) {
+        String generics = "";
+        SimpleClass clazz = SimpleClass.of(typeName);
+        String clazzFull = clazz.getName() + (clazz.hasGeneric() ? "<" + clazz.getRawGeneric() + ">" : "");
+        typeName = typeName.substring(typeName.indexOf(clazzFull) + clazzFull.length());
+        if (typeName.contains("<"))
+            generics = typeName.substring(typeName.indexOf("<") + 1, typeName.lastIndexOf(">"));
+
+        return new SimpleType(clazz, generics, typeName.endsWith("[]"), extended);
+    }
+
+    private final SimpleClass clazz;
     private boolean extended;
+    private boolean array;
 
     private SimpleType[] generics;
 
-    private SimpleType(String path, String name) {
-        if(path != null && path.startsWith("? extends")) {
-            System.out.println("extends..");
-            extended = true;
-            path = path.substring("? extends ".length());
-            System.out.println("path = " + path);
-        }
+    private SimpleType(SimpleClass clazz, String generics, boolean array, boolean extended) {
+        System.out.println("SimpleType(" + clazz + ", " + generics + ", " + array + ", " + extended + ")");
+        this.clazz = clazz;
+        this.extended = extended;
+        this.array = array;
 
-        this.path = path;
-        primitive = path == null || path.isBlank() || !path.contains(".");
-
-        if (!primitive && name.contains("<")) {
+        if (!generics.isEmpty()) {
             // handle generic type
-            String generic = name.substring(name.indexOf("<") + 1, name.indexOf(">"));
-            String[] generics = generic.split(", ");
-            this.generics = new SimpleType[generics.length];
+            System.out.println("Generic: " + generics);
+
+            List<String> split = new ArrayList<>();
+
+            int s = 0, eF = 0;
+            for (int i = 0; i < generics.length(); i++) {
+                char c = generics.charAt(i);
+                if (c == '?') {
+                    String sub = generics.substring(i);
+                    if (sub.startsWith("? extends")) {
+                        i += "? extends".length();
+                    }
+                } else if (eF == 0 && c == ',') {
+                    split.add(generics.substring(s, i));
+                } else if (eF == 0 && c == ' ') {
+                    s = i + 1; // start index
+                } else if (c == '<') {
+                    eF++; // end flag
+                } else if (c == '>')
+                    eF--;
+            }
+            split.add(generics.substring(s) + (eF > 0 ? '>' : ""));
+            System.out.println("Split: " + split);
+
+            this.generics = new SimpleType[split.size()];
 
             for (int i = 0; i < this.generics.length; i++) {
-                Pair<String, String> out = split(generics[i]);
-                System.out.println("Creating generic: " + out.getKey() + ", " + out.getValue());
-                this.generics[i] = new SimpleType(out.getKey(), out.getValue());
+                String typeName = split.get(i);
+                System.out.println("Creating generic: " + typeName);
+                this.generics[i] = of(typeName, typeName.startsWith("? extends"));
             }
 
-            this.name = name.substring(0, name.indexOf("<"));
-        } else {
-            this.name = name;
         }
     }
 
@@ -52,20 +75,28 @@ public class SimpleType {
         return Collections.unmodifiableCollection(Arrays.asList(this.generics));
     }
 
+    public boolean isArray() {
+        return array;
+    }
+
     public boolean hasGeneric() {
         return generics != null;
     }
 
     public boolean isPrimitive() {
-        return primitive;
+        return clazz.isPrimitive();
     }
 
     public String getName() {
-        return name;
+        return clazz.toString();
     }
 
     public String getPackage() {
-        return path;
+        return clazz.getPath();
+    }
+
+    public SimpleClass getSimpleClass() {
+        return clazz;
     }
 
     @Override
@@ -81,6 +112,9 @@ public class SimpleType {
             header.append(String.join(", ", vals));
             header.append(">");
         }
+
+        if (isArray())
+            header.append("[]");
 
         return header.toString();
     }

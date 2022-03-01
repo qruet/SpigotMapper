@@ -1,5 +1,8 @@
 package dev.qruet.mapper.java.simple;
 
+/***
+ * Derived properties from string path of class (does not include generics, see {@link SimpleType})
+ */
 public class SimpleClass {
 
     public static SimpleClass of(Class<?> clazz) {
@@ -13,31 +16,18 @@ public class SimpleClass {
     private final String name;
     private SimpleClass parent;
     private String path;
-    private Generic generic;
 
     private SimpleClass(String path) {
-        if (path.length() > 1) {
-            int sF = path.indexOf("<");
-            if (path.charAt(sF + 2) == '>') {
-                generic = new Generic(new SimpleClass("" + path.charAt(sF + 1)));
-            } else if (sF > -1) {
-                String sub = path.substring(sF + 1, path.indexOf(">"));
-                if (sub.startsWith("? super")) {
-                    String subType = sub.substring("? super ".length());
-                    if(subType.contains(".")) {
-                        generic = new Generic("? super ", new SimpleClass(subType));
-                    } else {
-                        generic = new Generic(new SimpleClass(sub));
-                    }
-                }
-            }
-        }
+        if (path.startsWith("? "))
+            path = path.substring(path.indexOf(" ", "? ".length()) + 1);
 
-        if (path.contains("<"))
-            path = path.substring(0, path.indexOf("<"));
+        // ignore generics
+        path = path.replaceAll("<.*?>", "");
+        path = path.replaceAll(">", ""); // trim
 
-        if (path.startsWith("? extends "))
-            path = path.substring("? extends ".length());
+        int i1 = path.indexOf("[");
+        if (i1 > -1)
+            path = path.substring(0, i1);
 
         if (path.contains("$")) {
             // handle subclass
@@ -52,18 +42,6 @@ public class SimpleClass {
         } else {
             this.name = path;
         }
-    }
-
-    public boolean hasGeneric() {
-        return generic != null;
-    }
-
-    public String getGeneric() {
-        return generic.toString();
-    }
-
-    public String getRawGeneric() {
-        return generic.toFullString();
     }
 
     public String getName() {
@@ -87,31 +65,7 @@ public class SimpleClass {
     }
 
     public String toString() {
-        return getName() + (hasGeneric() ? "<" + getGeneric() + ">" : "");
-    }
-
-    private static class Generic {
-        private String prefix = "";
-        private SimpleClass post;
-
-        public Generic(SimpleClass post) {
-            this.post = post;
-        }
-
-        public Generic(String prefix, SimpleClass post) {
-            this.prefix = prefix;
-            this.post = post;
-        }
-
-        @Override
-        public String toString() {
-            return prefix + post;
-        }
-
-        public String toFullString() {
-            return prefix + (post.getPath() == null ? "" : post.getPath()) + post;
-        }
-
+        return getName();
     }
 
 }

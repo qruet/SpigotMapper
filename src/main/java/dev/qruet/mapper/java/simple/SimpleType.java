@@ -8,30 +8,36 @@ import java.util.*;
 public class SimpleType {
 
     public static SimpleType of(Type type) {
-        return of(type.getTypeName(), false);
+        return of(type.getTypeName());
     }
 
-    private static SimpleType of(String typeName, boolean extended) {
+    private static SimpleType of(String typeName) {
+        System.out.println("#of(" + typeName + ")");
         String generics = "";
+        String prefix = "";
+
+        if (typeName.startsWith("? ")) {
+            prefix = typeName.substring(0, typeName.indexOf(" ", "? ".length()));
+        }
+
         SimpleClass clazz = SimpleClass.of(typeName);
-        String clazzFull = clazz.getName() + (clazz.hasGeneric() ? "<" + clazz.getRawGeneric() + ">" : "");
-        typeName = typeName.substring(typeName.indexOf(clazzFull) + clazzFull.length());
+        typeName = typeName.substring(typeName.indexOf(clazz.getName()));
         if (typeName.contains("<"))
             generics = typeName.substring(typeName.indexOf("<") + 1, typeName.lastIndexOf(">"));
 
-        return new SimpleType(clazz, generics, typeName.endsWith("[]"), extended);
+        return new SimpleType(clazz, generics, typeName.endsWith("[]"), prefix);
     }
 
     private final SimpleClass clazz;
-    private boolean extended;
+    private String prefix;
     private boolean array;
 
     private SimpleType[] generics;
 
-    private SimpleType(SimpleClass clazz, String generics, boolean array, boolean extended) {
-        System.out.println("SimpleType(" + clazz + ", " + generics + ", " + array + ", " + extended + ")");
+    private SimpleType(SimpleClass clazz, String generics, boolean array, String special_prefix) {
+        System.out.println("SimpleType(" + clazz + ", " + generics + ", " + array + ", " + special_prefix + ")");
         this.clazz = clazz;
-        this.extended = extended;
+        this.prefix = special_prefix;
         this.array = array;
 
         if (!generics.isEmpty()) {
@@ -45,8 +51,9 @@ public class SimpleType {
                 char c = generics.charAt(i);
                 if (c == '?') {
                     String sub = generics.substring(i);
-                    if (sub.startsWith("? extends")) {
-                        i += "? extends".length();
+                    if (sub.startsWith("? ")) {
+                        String prefix = sub.substring(0, sub.indexOf(" ", "? ".length()));
+                        i += prefix.length();
                     }
                 } else if (eF == 0 && c == ',') {
                     split.add(generics.substring(s, i));
@@ -57,6 +64,7 @@ public class SimpleType {
                 } else if (c == '>')
                     eF--;
             }
+
             split.add(generics.substring(s) + (eF > 0 ? '>' : ""));
             System.out.println("Split: " + split);
 
@@ -65,7 +73,7 @@ public class SimpleType {
             for (int i = 0; i < this.generics.length; i++) {
                 String typeName = split.get(i);
                 System.out.println("Creating generic: " + typeName);
-                this.generics[i] = of(typeName, typeName.startsWith("? extends"));
+                this.generics[i] = of(typeName);
             }
 
         }
@@ -101,11 +109,13 @@ public class SimpleType {
 
     @Override
     public String toString() {
-        StringBuilder header = new StringBuilder(extended ? "? extends " + getName() : getName());
+        System.out.println("#toString(" + getName() + ")");
+        StringBuilder header = new StringBuilder(prefix.isBlank() ? getName() : prefix + " " + getName());
         if (hasGeneric()) {
             // handle generics
             header.append("<");
             List<String> vals = new ArrayList<>();
+            System.out.println("Generic Count: " + generics.length);
             for (SimpleType type : generics)
                 vals.add(type.toString());
             // TODO resolve recursive issues with nested generic types
@@ -130,4 +140,5 @@ public class SimpleType {
 
         return new Pair<>(sC.getPath(), sC.getName() + (sI > -1 ? type.substring(sI) + ">" : ""));
     }
+
 }

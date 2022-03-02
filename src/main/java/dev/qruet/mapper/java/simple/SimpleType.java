@@ -42,9 +42,9 @@ public class SimpleType {
     private SimpleType[] generics;
 
     private boolean displayParent = false;
+    private boolean displayGenerics = true;
 
     private SimpleType(SimpleClass clazz, String generics, String postfix, String special_prefix) {
-        System.out.println("SimpleType([" + clazz + "], [" + generics + "], [" + postfix + "], [" + special_prefix + "])");
         this.clazz = clazz;
         this.prefix = special_prefix;
         this.postfix = postfix;
@@ -93,6 +93,10 @@ public class SimpleType {
         displayParent = show;
     }
 
+    public void showGenerics(boolean show) {
+        displayGenerics = show;
+    }
+
     public boolean isArray() {
         return !postfix.isBlank();
     }
@@ -106,7 +110,15 @@ public class SimpleType {
     }
 
     public String getName() {
-        return clazz.hasParent() && displayParent ? clazz.getParent().getName() + "." + clazz : clazz.getName();
+        StringBuilder name = new StringBuilder(clazz.getName());
+        if(displayParent) {
+            SimpleClass parent = clazz.getParent();
+            while(parent != null) {
+                name.insert(0, parent.getName() + ".");
+                parent = parent.getParent();
+            }
+        }
+        return name.toString();
     }
 
     public String getPackage() {
@@ -120,7 +132,7 @@ public class SimpleType {
     @Override
     public String toString() {
         StringBuilder header = new StringBuilder(prefix.isBlank() ? getName() : prefix + " " + getName());
-        if (hasGenerics()) {
+        if (displayGenerics && hasGenerics()) {
             // handle generics
             header.append("<");
             List<String> vals = new ArrayList<>();

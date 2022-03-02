@@ -28,12 +28,12 @@ public class SimpleClass {
         if (i1 > -1)
             path = path.substring(0, i1);
 
-        if (path.contains("$")) {
+        int i2 = path.lastIndexOf("$");
+        if (i2 > -1) {
             // handle subclass
-            String[] split = path.split("\\$");
-            this.name = split[1];
-            this.parent = new SimpleClass(split[0]);
-            this.path = split[0];
+            this.path = path.substring(0, i2);
+            this.parent = new SimpleClass(this.path);
+            this.name = path.substring(i2 + 1);
         } else if (path.contains(".")) {
             int index = path.lastIndexOf(".");
             this.name = path.substring(index + 1);

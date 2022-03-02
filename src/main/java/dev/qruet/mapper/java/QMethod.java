@@ -6,6 +6,7 @@ import dev.qruet.mapper.java.util.Pair;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -31,26 +32,43 @@ public class QMethod {
 
         SimpleType type = SimpleType.of(returnType);
         StringBuilder header = new StringBuilder(type + " " + name + "(");
-        System.out.println("Args[" + parameters.length + "]: " + Arrays.toString(parameters));
 
         int index = 0;
         if (parameters.length == 0) {
             header.append(")");
             index = classBody.indexOf(header.toString());
-            while (type.hasGenerics() && index == -1) {
-                SimpleType[] generics = type.generics().toArray(new SimpleType[0]);
-                boolean[][] patterns = buildRandomPattern(generics.length);
+            if (index == -1 && type.hasGenerics()) {
+                SimpleType[] generics = populateGenerics(type, new ArrayList<>()).toArray(new SimpleType[0]);
+                int a = type.getSimpleClass().hasParent() ? 1 : 0;
+                boolean[][] patterns = buildRandomPattern(generics.length + a);
 
                 int i = 0;
                 do {
                     boolean[] pattern = patterns[i++];
-                    for (int j = 0; j < pattern.length; j++)
-                        generics[j].showParent(pattern[j]);
+                    int j = 0;
+                    if (type.getSimpleClass().hasParent()) {
+                        j = 1;
+                        type.showParent(pattern[0]);
+                    }
+
+                    // configure
+                    for (int k = 0; k < generics.length; k++, j++)
+                        generics[k].showParent(pattern[j]);
+                    // ------
 
                     header = new StringBuilder(type + " " + name + "()");
-                    System.out.println("Trying: " + header);
                     index = classBody.indexOf(header.toString());
                 } while (index == -1 && i < patterns.length);
+
+                if(index == -1) {
+                    // final index search with wildcard generics
+                    type.showGenerics(false);
+                    Pattern p = Pattern.compile(type + "<.*?> " + name + "\\(\\)");
+                    type.showGenerics(true);
+                    Matcher match = p.matcher(classBody);
+                    if (match.find())
+                        index = match.start();
+                }
             }
         } else {
             int lastIndex = classBody.lastIndexOf(header.toString());
@@ -58,7 +76,6 @@ public class QMethod {
                 index = classBody.indexOf(header.toString(), index);
                 int endix = classBody.indexOf(")", index);
                 String pH = classBody.substring(index + header.length(), endix); // parameter header
-                System.out.println("\nChecking against method parameter header: " + pH + "\n");
 
 
                 char[] pHa = pH.toCharArray();
@@ -110,7 +127,6 @@ public class QMethod {
                     }
                 }
 
-                System.out.println("1: " + Arrays.asList(entries));
                 if (entries.size() != parameters.length)
                     continue;
 
@@ -129,12 +145,13 @@ public class QMethod {
             }
         }
 
-        System.out.println("Index: " + index);
         if (index == -1) {
             System.out.println("=====================");
             System.out.println("Failed to build method: " + header);
             System.out.println("=====================");
         }
+
+        System.out.println("Index = " + index);
 
         String trim = classBody;
         trim = trim.substring(index);
@@ -147,10 +164,11 @@ public class QMethod {
             char ch = trim.charAt(i);
             if (ch == '\'') {
                 oc = (oc == 0 ? '\'' : (oc == '\'' ? 0 : oc));
-                System.out.println("OC = " + oc);
             } else if (ch == '"') {
                 oc = (oc == 0 ? '"' : (oc == '"' ? 0 : oc));
-                System.out.println("OC = " + oc);
+            } else if (oc != 0 && ch == '\\') {
+                i++;
+                continue;
             }
 
             if (oc != 0)
@@ -164,7 +182,6 @@ public class QMethod {
 
         trim = trim.substring(0, i - 1);
         body.addAll(Arrays.stream(trim.split("\n")).filter(ln -> !ln.isBlank()).collect(Collectors.toList()));
-        System.out.println("Done!\n");
     }
 
     public Type returnType() {
@@ -183,20 +200,22 @@ public class QMethod {
         return name;
     }
 
-    private boolean compare(String og, SimpleType gen) {
-        System.out.println("[BEFORE]: " + og + "  vs  " + gen);
+    private boolean compare(String str, SimpleType gen) {
+        String og = str;
+
         SimpleType[] generics = null;
         boolean[][] patterns = null;
 
         if (gen.hasGenerics() || gen.getSimpleClass().hasParent()) {
             if (gen.hasGenerics()) {
                 generics = populateGenerics(gen, new ArrayList<>()).toArray(new SimpleType[0]);
-                System.out.println("Generics: " + Arrays.toString(generics));
             }
 
             int a = gen.getSimpleClass().hasParent() ? 1 : 0;
             patterns = buildRandomPattern(generics == null ? a : generics.length + a);
         }
+
+        og = og.replace("...", "[]");
 
         int i = 0;
         do {
@@ -210,8 +229,8 @@ public class QMethod {
 
                 if (generics != null) {
                     // configure
-                    for (; j < generics.length; j++)
-                        generics[j].showParent(pattern[j]);
+                    for (int k = 0; k < generics.length; k++, j++)
+                        generics[k].showParent(pattern[j]);
                     // ------
                 }
             }
@@ -219,12 +238,17 @@ public class QMethod {
             String t1_str = gen.toString();
 
             Pattern p = Pattern.compile("<.*?>");
-            if (p.matcher(t1_str).find() && !p.matcher(og).find()) {
+
+            boolean f1 = p.matcher(t1_str).find();
+            boolean f2 = p.matcher(og).find();
+
+            if (f1 && !f2) {
                 t1_str = t1_str.replaceAll("<.*?>", "");
-            } else if (!p.matcher(t1_str).find() && p.matcher(og).find())
+            } else if (!f1 && f2)
                 og = og.replaceAll("<.*?>", "");
 
-            System.out.println("[AFTER]: " + og + "  vs  " + t1_str);
+            System.out.println(og + " vs " + t1_str);
+
             if (og.equals(t1_str)) {
                 return true;
             }
@@ -233,10 +257,10 @@ public class QMethod {
     }
 
     private List<SimpleType> populateGenerics(SimpleType type, List<SimpleType> generics) {
-        if(!type.hasGenerics())
+        if (!type.hasGenerics())
             return generics;
 
-        for(SimpleType generic : type.generics()) {
+        for (SimpleType generic : type.generics()) {
             generics.add(generic);
             populateGenerics(generic, generics);
         }

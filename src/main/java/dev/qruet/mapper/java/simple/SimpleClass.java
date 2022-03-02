@@ -22,8 +22,7 @@ public class SimpleClass {
             path = path.substring(path.indexOf(" ", "? ".length()) + 1);
 
         // ignore generics
-        path = path.replaceAll("<.*?>", "");
-        path = path.replaceAll(">", ""); // trim
+        path = trim(path);
 
         int i1 = path.indexOf("[");
         if (i1 > -1)
@@ -42,6 +41,27 @@ public class SimpleClass {
         } else {
             this.name = path;
         }
+    }
+
+    /**
+     * Removes generics from class path
+     * @param path Class path
+     * @return Trimmed class path
+     */
+    private String trim(String path) {
+        StringBuilder trimmed = new StringBuilder();
+        int f = 0; // flag
+        for(int i = 0; i < path.length(); i++) {
+            char c = path.charAt(i);
+            if(c == '>')
+                f--;
+            else if(c == '<')
+                f++;
+            else if(f == 0)
+                trimmed.append(c);
+        }
+
+        return trimmed.toString();
     }
 
     public String getName() {

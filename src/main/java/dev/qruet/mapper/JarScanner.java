@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 public class JarScanner {
 
@@ -30,16 +31,15 @@ public class JarScanner {
     }
 
     public void scan() {
+        System.out.println("Scanning w/ filters: " + Arrays.toString(filters));
         boolean skip = true;
         try {
             java.util.Enumeration enumEntries = jar.entries();
             while (enumEntries.hasMoreElements()) {
                 java.util.jar.JarEntry file = (java.util.jar.JarEntry) enumEntries.nextElement();
                 if(file.isDirectory()) {
-                    if(filters.length == 0 || Arrays.stream(filters).anyMatch(f -> file.getName().contains(f.replaceAll("\\.", "/")))) {
-                        skip = false;
-                    } else
-                        skip = true;
+                    // check if we should skip the following classes in the current package
+                    skip = filters != null && Arrays.stream(filters).noneMatch(f -> file.getName().replaceAll("/", ".").startsWith(f));
                     continue;
                 }
 
@@ -48,7 +48,9 @@ public class JarScanner {
 
                 String path = file.getName();
                 path = path.replaceAll("/", ".");
-                loadClass(path.substring(0, path.indexOf(".class")));
+                int in = path.indexOf(".class");
+                if(in > -1)
+                    loadClass(path.substring(0, in));
             }
             jar.close();
         } catch(IOException e) {

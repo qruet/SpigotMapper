@@ -1,9 +1,12 @@
 package dev.qruet.mapper.java;
 
+import dev.qruet.mapper.java.element.QElement;
 import dev.qruet.mapper.java.simple.SimpleField;
 import dev.qruet.mapper.java.simple.SimpleType;
 import dev.qruet.mapper.java.util.Pair;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -19,15 +22,24 @@ public class QMethod {
     private final String name;
     private final Type returnType;
     private final Type[] parameters;
-    private final List<String> body;
+    private final Body body;
+    private final boolean is_static;
+    private final boolean is_final;
+    private final Visibility visibility;
 
-    public QMethod(final QClass parent, final String name, Type returnType, Type... params) {
+    public QMethod(final QClass parent, Method method) {
         this.parent = parent;
-        this.name = name;
-        this.parameters = params;
-        this.returnType = returnType;
+        this.name = method.getName();
 
-        this.body = new ArrayList<>();
+        this.is_static = Modifier.isStatic(method.getModifiers());
+        this.is_final = Modifier.isFinal(method.getModifiers());
+
+        this.parameters = method.getGenericParameterTypes();
+        this.returnType = method.getGenericReturnType();
+
+        this.visibility = Visibility.fromModifier(method.getModifiers());
+
+        this.body = new Body();
         final String classBody = parent.decompile();
 
         SimpleType type = SimpleType.of(returnType);
@@ -60,7 +72,7 @@ public class QMethod {
                     index = classBody.indexOf(header.toString());
                 } while (index == -1 && i < patterns.length);
 
-                if(index == -1) {
+                if (index == -1) {
                     // final index search with wildcard generics
                     type.showGenerics(false);
                     Pattern p = Pattern.compile(type + "<.*?> " + name + "\\(\\)");
@@ -184,16 +196,28 @@ public class QMethod {
         body.addAll(Arrays.stream(trim.split("\n")).filter(ln -> !ln.isBlank()).collect(Collectors.toList()));
     }
 
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    public boolean isFinal() {
+        return is_final;
+    }
+
+    public boolean isStatic() {
+        return is_static;
+    }
+
     public Type returnType() {
         return returnType;
     }
 
-    public Iterator<String> getBody() {
-        return body.iterator();
+    public Body getBody() {
+        return body;
     }
 
-    public Collection<Type> parameters() {
-        return Collections.unmodifiableCollection(Arrays.asList(parameters));
+    public List<Type> parameters() {
+        return Arrays.asList(parameters);
     }
 
     public String getName() {
@@ -287,6 +311,39 @@ public class QMethod {
             base[i] = boolArray;
         }
         return base;
+    }
+
+    private class Body {
+
+        private LinkedList<Line> lines = new LinkedList<>();
+
+        public void addAll(Collection<String> lines) {
+            for (String line : lines)
+                this.lines.add(new Line(line));
+        }
+
+        public Collection<Line> lines() {
+            return Collections.unmodifiableCollection(lines);
+        }
+
+        private class Line {
+
+            private LinkedList<QElement<?>> elements = new LinkedList<>();
+
+            public Line(String line) {
+                for (String elem : line.split(" ")) {
+                    if (elem.startsWith("this.")) {
+                        String raw = elem.substring("this.".length()).replace(";", "");
+                        SimpleType ref = SimpleType.of(raw);
+                        elements.add(new QElement(parent.getField(ref.getName()), raw));
+                    } else {
+                        elements.add(new QElement<>(elem, elem));
+                    }
+                }
+            }
+
+        }
+
     }
 
 }

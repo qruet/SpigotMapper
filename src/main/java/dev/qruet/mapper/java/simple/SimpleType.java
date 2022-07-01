@@ -9,7 +9,7 @@ public class SimpleType {
         return of(type.getTypeName());
     }
 
-    private static SimpleType of(String typeName) {
+    public static SimpleType of(String typeName) {
         System.out.println("#of(" + typeName + ")");
         String generics = "";
         String prefix = "";
@@ -29,7 +29,7 @@ public class SimpleType {
         }
 
         int s2 = typeName.indexOf("[");
-        if(s2 > -1)
+        if (s2 > -1)
             postfix = typeName.substring(s2, typeName.lastIndexOf("]") + 1);
 
         return new SimpleType(clazz, generics, postfix, prefix);
@@ -111,9 +111,9 @@ public class SimpleType {
 
     public String getName() {
         StringBuilder name = new StringBuilder(clazz.getName());
-        if(displayParent) {
+        if (displayParent) {
             SimpleClass parent = clazz.getParent();
-            while(parent != null) {
+            while (parent != null) {
                 name.insert(0, parent.getName() + ".");
                 parent = parent.getParent();
             }

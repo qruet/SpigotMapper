@@ -4,3 +4,8 @@ target/
 resources/
 logs/
 *.txt
+out/
+.mvn/
+*.iml
+*.cmd
+mvnm

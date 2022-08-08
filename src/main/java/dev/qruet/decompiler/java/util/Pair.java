@@ -1,4 +1,4 @@
-package dev.qruet.mapper.java.util;
+package dev.qruet.decompiler.java.util;
 
 public class Pair<T, K> {
 

@@ -1,6 +1,5 @@
-package dev.qruet.mapper.jd;
+package dev.qruet.decompiler.jd;
 
-import dev.qruet.mapper.Main;
 import org.jd.core.v1.api.loader.Loader;
 import org.jd.core.v1.api.loader.LoaderException;
 

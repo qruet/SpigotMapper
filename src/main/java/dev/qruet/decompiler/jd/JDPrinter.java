@@ -1,4 +1,4 @@
-package dev.qruet.mapper.jd;
+package dev.qruet.decompiler.jd;
 
 import org.jd.core.v1.api.printer.Printer;
 

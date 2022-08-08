@@ -1,4 +1,4 @@
-package dev.qruet.mapper.java.simple;
+package dev.qruet.decompiler.java.simple;
 
 /***
  * Derived properties from string path of class (does not include generics, see {@link SimpleType})

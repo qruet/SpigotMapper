@@ -1,4 +1,4 @@
-package dev.qruet.mapper.java;
+package dev.qruet.decompiler.java;
 
 import java.lang.reflect.Modifier;
 

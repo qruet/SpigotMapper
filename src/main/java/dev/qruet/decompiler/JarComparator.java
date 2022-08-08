@@ -1,8 +1,8 @@
-package dev.qruet.mapper;
+package dev.qruet.decompiler;
 
-import dev.qruet.mapper.java.QClass;
-import dev.qruet.mapper.java.QMethod;
-import dev.qruet.mapper.java.Visibility;
+import dev.qruet.decompiler.java.io.JarClass;
+import dev.qruet.decompiler.java.io.JarMethod;
+import dev.qruet.decompiler.java.Visibility;
 
 import java.net.URLClassLoader;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +15,7 @@ public class JarComparator {
 
     private static final String PACKAGE = "";
     private final JarScanner scanner;
-    private QClass mainClass;
+    private JarClass mainClass;
 
     public JarComparator(URLClassLoader loader, JarFile jar1, JarFile jar2) {
         this.scanner = new JarScanner(loader, jar1);
@@ -39,12 +39,12 @@ public class JarComparator {
             failed.getAndIncrement();
             System.out.println("Failed to load class, " + clazz + ".");
         });
-        scanner.scan();
+        scanner.scan(true);
         System.out.println("\n\nLoaded " + counter + " classes within " + PACKAGE + "!");
         System.out.println(failed + " classes failed to load.\n\n");
     }
 
-    private boolean isMain(QMethod method) {
+    private boolean isMain(JarMethod method) {
         return method.getVisibility() == Visibility.PUBLIC && method.isStatic() && method.returnType().getTypeName().equals("void") &&
                 method.getName().equals("main") && method.parameters().size() == 1 && method.parameters().get(0) == String[].class;
     }

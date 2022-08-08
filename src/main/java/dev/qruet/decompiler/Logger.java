@@ -1,4 +1,4 @@
-package dev.qruet.mapper;
+package dev.qruet.decompiler;
 
 import java.io.File;
 import java.io.FileWriter;

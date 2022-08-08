@@ -1,9 +1,10 @@
-package dev.qruet.mapper.java;
+package dev.qruet.decompiler.java.io;
 
-import dev.qruet.mapper.java.element.QElement;
-import dev.qruet.mapper.java.simple.SimpleField;
-import dev.qruet.mapper.java.simple.SimpleType;
-import dev.qruet.mapper.java.util.Pair;
+import dev.qruet.decompiler.java.Visibility;
+import dev.qruet.decompiler.java.element.QElement;
+import dev.qruet.decompiler.java.simple.SimpleField;
+import dev.qruet.decompiler.java.simple.SimpleType;
+import dev.qruet.decompiler.java.util.Pair;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -16,9 +17,9 @@ import java.util.stream.Collectors;
 /**
  * @author Qruet
  */
-public class QMethod {
+public class JarMethod {
 
-    private final QClass parent;
+    private final JarClass parent;
     private final String name;
     private final Type returnType;
     private final Type[] parameters;
@@ -27,7 +28,7 @@ public class QMethod {
     private final boolean is_final;
     private final Visibility visibility;
 
-    public QMethod(final QClass parent, Method method) {
+    public JarMethod(final JarClass parent, Method method) {
         this.parent = parent;
         this.name = method.getName();
 

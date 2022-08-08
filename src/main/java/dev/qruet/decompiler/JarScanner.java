@@ -1,21 +1,21 @@
-package dev.qruet.mapper;
+package dev.qruet.decompiler;
 
-import dev.qruet.mapper.java.QClass;
+import dev.qruet.decompiler.java.io.JarClass;
 
 import java.io.IOException;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.Scanner;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.jar.JarFile;
-import java.util.stream.Stream;
 
 public class JarScanner {
 
     private final URLClassLoader classLoader;
     private final JarFile jar;
-    private Consumer<QClass> consumer;
+    private Consumer<JarClass> consumer;
+
+    private Consumer<String> scan_consumer;
     private BiConsumer<String, Throwable> ex_consume;
     private String[] filters;
 
@@ -28,7 +28,10 @@ public class JarScanner {
         this.filters = packages;
     }
 
-    public void onClassLoad(Consumer<QClass> consumer) {
+    public void onScan(Consumer<String> consumer) {
+        this.scan_consumer = consumer;
+    }
+    public void onClassLoad(Consumer<JarClass> consumer) {
         this.consumer = consumer;
     }
 
@@ -36,7 +39,7 @@ public class JarScanner {
         this.ex_consume = consumer;
     }
 
-    public void scan() {
+    public void scan(boolean load) {
         System.out.println("Scanning w/ filters: " + Arrays.toString(filters));
         boolean skip = true;
         try {
@@ -56,8 +59,11 @@ public class JarScanner {
                 path = path.replaceAll("/", ".");
                 int in = path.indexOf(".class");
                 try {
-                    if (in > -1)
-                        loadClass(path.substring(0, in));
+                    if (in > -1) {
+                        this.scan_consumer.accept(path);
+                        if(load)
+                            loadClass(path.substring(0, in));
+                    }
                 } catch (Throwable e) {
                     if (this.ex_consume != null)
                         this.ex_consume.accept(path.substring(0, in), e);
@@ -78,7 +84,7 @@ public class JarScanner {
 
         Class<?> clazz = Class.forName(path, false, classLoader);
 
-        QClass c = new QClass(clazz);
+        JarClass c = new JarClass(clazz);
         if (consumer != null)
             consumer.accept(c);
     }

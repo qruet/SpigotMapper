@@ -1,4 +1,4 @@
-package dev.qruet.mapper.java.simple;
+package dev.qruet.decompiler.java.simple;
 
 import java.lang.reflect.Type;
 import java.util.*;

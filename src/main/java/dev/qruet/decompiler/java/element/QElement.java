@@ -1,4 +1,4 @@
-package dev.qruet.mapper.java.element;
+package dev.qruet.decompiler.java.element;
 
 public class QElement<T> {
 

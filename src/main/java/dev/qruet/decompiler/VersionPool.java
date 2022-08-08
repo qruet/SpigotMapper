@@ -1,4 +1,4 @@
-package dev.qruet.mapper;
+package dev.qruet.decompiler;
 
 /**
  * Responsible for holding corresponding classes from each
